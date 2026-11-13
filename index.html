@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriShift - NASA Space Apps</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1e1e1e; color: white; padding: 40px; }
+        .card { background: #2d2d2d; padding: 20px; border-radius: 8px; max-width: 600px; }
+        select, button { padding: 10px; margin-top: 10px; font-size: 16px; }
+        button { background: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🌱 Field Shift: Crop Planner</h1>
+        <p>A Crop Rotation Planner using NASA Environmental Data.</p>
+        
+        <label for="location"><strong>Select Location:</strong></label><br>
+        <select id="location">
+            <option value="Anuradhapura">Anuradhapura</option>
+            <option value="Polonnaruwa">Polonnaruwa</option>
+            <option value="Hambantota">Hambantota</option>
+        </select>
+        <button onclick="fetchPlan()">Analyze NASA Data</button>
+
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        async function fetchPlan() {
+            const loc = document.getElementById('location').value;
+            const resDiv = document.getElementById('result');
+            resDiv.innerHTML = "<em>Fetching NASA Climatology Data...</em>";
+            
+            try {
+                const response = await fetch(`/api/crop-plan?location=${loc}`);
+                const data = await response.json();
+                
+                resDiv.innerHTML = `
+                    <h3>📡 NASA Satellite Data Analysis</h3>
+                    <p>🌡️ <strong>Avg Temperature:</strong> ${data.temperature} °C</p>
+                    <p>🌧️ <strong>Precipitation:</strong> ${data.precipitation} mm/day</p>
+                    <p>💧 <strong>Soil Wetness Index:</strong> ${data.soil_moisture}</p>
+                    <hr>
+                    <h3>💡 Crop Rotation Strategy</h3>
+                    <h4 style="color: #4CAF50;">✅ Recommendation: ${data.recommendation}</h4>
+                    <p>${data.reason}</p>
+                `;
+            } catch (error) {
+                resDiv.innerHTML = "<p style='color:red;'>Error fetching data.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
