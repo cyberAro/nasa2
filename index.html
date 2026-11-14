@@ -71,20 +71,17 @@
         .data-point.temp { border-color: #e53935; background: #ffebee; }
         .data-point.rain { border-color: #1e88e5; background: #e3f2fd; }
         .data-point.soil { border-color: #8d6e63; background: #efebe9; }
-
-        .recommendation-box {
-            background: #e8f5e9; padding: 20px; border-radius: 12px;
-            margin-top: 20px; border: 2px solid #66bb6a;
-        }
+        .recommendation-box { background: #e8f5e9; padding: 20px; border-radius: 12px; margin-top: 20px; border: 2px solid #66bb6a; }
         .recommendation-box h4 { color: #2e7d32; font-size: 1.4rem; margin-bottom: 10px; }
         .loading { text-align: center; color: #1565c0; font-weight: bold; font-size: 1.2rem; margin-top: 20px; }
 
-        /* COMMUNITY CHAT STYLES */
+        /* AUTH & CHAT STYLES */
+        .auth-container { margin-top: 40px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: 12px; border: 1px solid #e0e0e0; }
+        #login-btn { background: #db4437; max-width: 250px; margin: 15px auto; display: block; box-shadow: 0 4px 15px rgba(219, 68, 55, 0.4); }
+        #logout-btn { background: #757575; padding: 8px 16px; width: auto; font-size: 14px; float: right; margin-top: -35px; box-shadow: none; }
+        
         .chat-container { margin-top: 40px; background: #f9f9f9; border-radius: 12px; padding: 20px; border: 1px solid #e0e0e0; }
-        .chat-messages { 
-            height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; 
-            margin-bottom: 15px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #ffffff;
-        }
+        .chat-messages { height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #ffffff; }
         .message { padding: 10px 14px; border-radius: 15px; font-size: 0.95rem; max-width: 85%; line-height: 1.4; }
         .msg-other { background: #f1f8e9; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #c8e6c9; }
         .msg-you { background: #e3f2fd; align-self: flex-end; border-bottom-right-radius: 2px; border: 1px solid #bbdefb; }
@@ -109,27 +106,38 @@
 
         <div id="result"></div>
 
-        <!-- COMMUNITY CHAT SECTION -->
-        <div class="chat-container">
-            <h3 style="margin-top: 0; border-bottom: none;">💬 Regional Farmer Chat</h3>
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Live community discussion board.</p>
-            
-            <div class="chat-messages" id="chat-messages">
-                <!-- Messages will load here from Firebase -->
-            </div>
-            
-            <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Share an update...">
-                <button id="send-btn">Send</button>
+        <!-- AUTHENTICATION SECTION -->
+        <div id="auth-section" class="auth-container">
+            <h3 style="margin-top: 0; border: none;">🔒 Farmer Community</h3>
+            <p style="color: #666;">Sign in to chat with other farmers in your region.</p>
+            <button id="login-btn">Sign in with Google</button>
+        </div>
+
+        <!-- COMMUNITY CHAT SECTION (Hidden until logged in) -->
+        <div id="chat-section" style="display: none;">
+            <div class="chat-container">
+                <button id="logout-btn">Logout</button>
+                <h3 style="margin-top: 0; border-bottom: none;">💬 Regional Chat</h3>
+                <p id="welcome-msg" style="font-size: 0.9rem; color: #666; margin-bottom: 15px;"></p>
+                
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages load here -->
+                </div>
+                
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Share an update...">
+                    <button id="send-btn">Send</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- FIREBASE AND APP LOGIC -->
     <script type="module">
-        // 1. Import Firebase core and database modules
+        // 1. Import Firebase core, database, and auth modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         // ==========================================
         // 2. YOUR FIREBASE CONFIGURATION
@@ -137,7 +145,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyDK21oehkpfOod71xZxiRiPRjTjb2JVh60",
             authDomain: "agrishift-9f2dc.firebaseapp.com",
-            databaseURL: "https://agrishift-9f2dc-default-rtdb.asia-southeast1.firebasedatabase.app", // <-- I added this line so the DB works!
+            databaseURL: "PASTE_YOUR_EXACT_DATABASE_URL_HERE", // <-- DO NOT FORGET TO REPLACE THIS!
             projectId: "agrishift-9f2dc",
             storageBucket: "agrishift-9f2dc.firebasestorage.app",
             messagingSenderId: "841675381324",
@@ -145,60 +153,96 @@
             measurementId: "G-ZTLCX9J20Y"
         };
 
-        // Initialize Firebase
+        // Initialize Firebase Services
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
         const chatRef = ref(db, "messages");
 
-        // Generate a random user ID for this browser session so we know which messages are "You"
-        const myUserId = "user_" + Math.floor(Math.random() * 10000);
+        let currentUser = null; // Tracks who is logged in
 
         // ==========================================
-        // 3. CHAT LOGIC (Sending & Receiving)
+        // 3. AUTHENTICATION LOGIC
         // ==========================================
+        const authSection = document.getElementById('auth-section');
+        const chatSection = document.getElementById('chat-section');
+        const welcomeMsg = document.getElementById('welcome-msg');
         const msgBox = document.getElementById('chat-messages');
+
+        // Login Button
+        document.getElementById('login-btn').addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch((error) => console.error("Login failed:", error));
+        });
+
+        // Logout Button
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth).catch((error) => console.error("Logout failed:", error));
+        });
+
+        // Monitor Login State
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is logged in
+                currentUser = user;
+                authSection.style.display = 'none';
+                chatSection.style.display = 'block';
+                welcomeMsg.innerText = `Welcome, ${user.displayName}!`;
+            } else {
+                // User is logged out
+                currentUser = null;
+                authSection.style.display = 'block';
+                chatSection.style.display = 'none';
+                msgBox.innerHTML = ''; // Clear chat history from screen on logout
+            }
+        });
+
+        // ==========================================
+        // 4. CHAT LOGIC (Sending & Receiving)
+        // ==========================================
         const chatInput = document.getElementById('chat-input');
 
-        // Function to send message to Firebase
         function sendMessage() {
             const text = chatInput.value.trim();
-            if (!text) return;
+            if (!text || !currentUser) return;
             
-            // Push message to Firebase database
+            // Push message to Firebase with actual user data
             push(chatRef, {
-                userId: myUserId,
+                userId: currentUser.uid,
+                userName: currentUser.displayName,
                 text: text,
                 timestamp: serverTimestamp()
             });
             chatInput.value = ''; // Clear input
         }
 
-        // Listen for new messages added to Firebase in real-time
+        // Listen for incoming messages
         onChildAdded(chatRef, (snapshot) => {
+            if (!currentUser) return; // Don't process if logged out
+            
             const data = snapshot.val();
             const newMsg = document.createElement('div');
             
-            // If the message was sent by this device, style it as "msg-you", otherwise "msg-other"
-            if (data.userId === myUserId) {
+            // Differentiate between "Your" messages and "Other" messages
+            if (data.userId === currentUser.uid) {
                 newMsg.className = 'message msg-you';
                 newMsg.innerHTML = `<strong>You:</strong> ${data.text}`;
             } else {
                 newMsg.className = 'message msg-other';
-                newMsg.innerHTML = `<strong>Farmer:</strong> ${data.text}`;
+                newMsg.innerHTML = `<strong>${data.userName}:</strong> ${data.text}`;
             }
             
             msgBox.appendChild(newMsg);
-            msgBox.scrollTop = msgBox.scrollHeight; // Auto-scroll to bottom
+            msgBox.scrollTop = msgBox.scrollHeight; // Auto-scroll
         });
 
-        // Event Listeners for Chat
         document.getElementById('send-btn').addEventListener('click', sendMessage);
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
 
         // ==========================================
-        // 4. CROP PLANNER LOGIC (Connected to Vercel Python API)
+        // 5. CROP PLANNER LOGIC (NASA API)
         // ==========================================
         document.getElementById('analyze-btn').addEventListener('click', async () => {
             const loc = document.getElementById('location').value;
@@ -219,7 +263,6 @@
                     <div class="data-point temp">🌡️ <strong>Temperature:</strong> ${data.temperature} °C</div>
                     <div class="data-point rain">🌧️ <strong>Precipitation:</strong> ${data.precipitation} mm/day</div>
                     <div class="data-point soil">💧 <strong>Soil Wetness:</strong> ${data.soil_moisture} Index</div>
-                    
                     <div class="recommendation-box">
                         <h4>✅ Optimal Crop: ${data.recommendation}</h4>
                         <p><strong>Agricultural Insight:</strong> ${data.reason}</p>
