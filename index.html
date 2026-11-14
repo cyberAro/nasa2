@@ -18,6 +18,49 @@
             align-items: flex-start;
         }
 
+        /* --- NAVIGATION MENU STYLES --- */
+        .navbar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        .hamburger {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 12px 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+            color: #1565c0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .hamburger:hover { background: #fff; }
+        .dropdown {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.95);
+            margin-top: 10px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            width: 200px;
+        }
+        .dropdown.show { display: flex; }
+        .dropdown button {
+            background: none; color: #333; border: none; padding: 15px 20px;
+            text-align: left; font-size: 16px; font-weight: 500;
+            box-shadow: none; margin: 0; border-radius: 0;
+            border-bottom: 1px solid #eee;
+        }
+        .dropdown button:last-child { border-bottom: none; }
+        .dropdown button:hover { background: #f0f0f0; transform: none; color: #1565c0; }
+
         /* Frosted Glass Card */
         .card { 
             background: rgba(255, 255, 255, 0.95); 
@@ -27,47 +70,33 @@
             width: 100%;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255,255,255,0.2);
+            margin-top: 40px; /* Space for the floating menu */
         }
+
+        /* View Toggling */
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Typography & Colors */
         h1 { color: #1565c0; font-size: 2.2rem; margin-bottom: 5px; }
         .subtitle { color: #555; font-size: 1.1rem; margin-bottom: 25px; font-weight: 500; }
         h3 { color: #2e7d32; margin-top: 25px; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
         
-        /* Inputs & Buttons */
+        /* Inputs & Main Buttons */
         label { font-weight: bold; color: #444; display: block; margin-bottom: 8px; }
-        select { 
-            width: 100%; 
-            padding: 12px; 
-            font-size: 16px; 
-            border-radius: 8px; 
-            border: 2px solid #ccc;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        
-        button { 
-            width: 100%; 
-            padding: 14px; 
-            margin-top: 20px; 
-            font-size: 18px; 
-            font-weight: bold;
-            background: linear-gradient(90deg, #ff8f00, #ffb300); 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(255, 143, 0, 0.4);
+        select { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 2px solid #ccc; outline: none; }
+        .primary-btn { 
+            width: 100%; padding: 14px; margin-top: 20px; font-size: 18px; font-weight: bold;
+            background: linear-gradient(90deg, #ff8f00, #ffb300); color: white; border: none; 
+            cursor: pointer; border-radius: 8px; box-shadow: 0 4px 15px rgba(255, 143, 0, 0.4);
             transition: transform 0.2s;
         }
-        button:hover { transform: translateY(-2px); }
+        .primary-btn:hover { transform: translateY(-2px); }
 
         /* Results Styling */
         #result { margin-top: 30px; line-height: 1.6; }
-        .data-point {
-            background: #f1f8e9; padding: 10px 15px; border-radius: 8px;
-            margin: 8px 0; border-left: 5px solid #7cb342; font-size: 1.1rem;
-        }
+        .data-point { background: #f1f8e9; padding: 10px 15px; border-radius: 8px; margin: 8px 0; border-left: 5px solid #7cb342; font-size: 1.1rem; }
         .data-point.temp { border-color: #e53935; background: #ffebee; }
         .data-point.rain { border-color: #1e88e5; background: #e3f2fd; }
         .data-point.soil { border-color: #8d6e63; background: #efebe9; }
@@ -76,76 +105,130 @@
         .loading { text-align: center; color: #1565c0; font-weight: bold; font-size: 1.2rem; margin-top: 20px; }
 
         /* AUTH & CHAT STYLES */
-        .auth-container { margin-top: 40px; text-align: center; padding: 20px; background: #f9f9f9; border-radius: 12px; border: 1px solid #e0e0e0; }
-        #login-btn { background: #db4437; max-width: 250px; margin: 15px auto; display: block; box-shadow: 0 4px 15px rgba(219, 68, 55, 0.4); }
-        #logout-btn { background: #757575; padding: 8px 16px; width: auto; font-size: 14px; float: right; margin-top: -35px; box-shadow: none; }
+        .auth-container { text-align: center; padding: 30px 20px; background: #f9f9f9; border-radius: 12px; border: 1px solid #e0e0e0; }
+        #login-btn { background: #db4437; max-width: 250px; margin: 15px auto; display: block; padding: 14px; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(219, 68, 55, 0.4); }
+        #logout-btn { background: #757575; padding: 8px 16px; width: auto; font-size: 14px; float: right; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: -5px; }
         
-        .chat-container { margin-top: 40px; background: #f9f9f9; border-radius: 12px; padding: 20px; border: 1px solid #e0e0e0; }
-        .chat-messages { height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #ffffff; }
+        .chat-container { background: #f9f9f9; border-radius: 12px; padding: 20px; border: 1px solid #e0e0e0; }
+        .chat-messages { height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #ffffff; }
         .message { padding: 10px 14px; border-radius: 15px; font-size: 0.95rem; max-width: 85%; line-height: 1.4; }
         .msg-other { background: #f1f8e9; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #c8e6c9; }
         .msg-you { background: #e3f2fd; align-self: flex-end; border-bottom-right-radius: 2px; border: 1px solid #bbdefb; }
         
         .chat-input-area { display: flex; gap: 10px; }
         .chat-input-area input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; outline: none; }
-        .chat-input-area button { margin-top: 0; width: auto; padding: 12px 24px; background: #1565c0; box-shadow: none; }
+        .chat-input-area button { margin-top: 0; width: auto; padding: 12px 24px; background: #1565c0; color: white; border: none; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🌱 Field Shift</h1>
-        <p class="subtitle">NASA Data-Driven Crop Rotation Planner</p>
-        
-        <label for="location">Select Agricultural Zone:</label>
-        <select id="location">
-            <option value="Anuradhapura">Anuradhapura (Dry Zone)</option>
-            <option value="Polonnaruwa">Polonnaruwa (Dry Zone)</option>
-            <option value="Hambantota">Hambantota (Dry Zone)</option>
-        </select>
-        <button id="analyze-btn">Analyze NASA Satellite Data 🚀</button>
-
-        <div id="result"></div>
-
-        <!-- AUTHENTICATION SECTION -->
-        <div id="auth-section" class="auth-container">
-            <h3 style="margin-top: 0; border: none;">🔒 Farmer Community</h3>
-            <p style="color: #666;">Sign in to chat with other farmers in your region.</p>
-            <button id="login-btn">Sign in with Google</button>
-        </div>
-
-        <!-- COMMUNITY CHAT SECTION (Hidden until logged in) -->
-        <div id="chat-section" style="display: none;">
-            <div class="chat-container">
-                <button id="logout-btn">Logout</button>
-                <h3 style="margin-top: 0; border-bottom: none;">💬 Regional Chat</h3>
-                <p id="welcome-msg" style="font-size: 0.9rem; color: #666; margin-bottom: 15px;"></p>
-                
-                <div class="chat-messages" id="chat-messages">
-                    <!-- Messages load here -->
-                </div>
-                
-                <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Share an update...">
-                    <button id="send-btn">Send</button>
-                </div>
-            </div>
+    <!-- FLOATING NAVIGATION MENU -->
+    <div class="navbar">
+        <button class="hamburger" onclick="toggleMenu()">☰ Menu</button>
+        <div class="dropdown" id="nav-dropdown">
+            <button onclick="switchView('home')">🏠 Home</button>
+            <button onclick="switchView('chat')">💬 Farmer Chat</button>
         </div>
     </div>
 
+    <div class="card">
+        
+        <!-- ============================== -->
+        <!-- HOME VIEW (NASA Crop Planner)  -->
+        <!-- ============================== -->
+        <div id="home-view" class="view-section active">
+            <h1>🌱 Field Shift</h1>
+            <p class="subtitle">NASA Data-Driven Crop Rotation Planner</p>
+            
+            <label for="location">Select Agricultural Zone:</label>
+            <select id="location">
+                <option value="Anuradhapura">Anuradhapura (Dry Zone)</option>
+                <option value="Polonnaruwa">Polonnaruwa (Dry Zone)</option>
+                <option value="Hambantota">Hambantota (Dry Zone)</option>
+            </select>
+            <button class="primary-btn" id="analyze-btn">Analyze NASA Satellite Data 🚀</button>
+
+            <div id="result"></div>
+        </div>
+
+
+        <!-- ============================== -->
+        <!-- CHAT VIEW (Community System)   -->
+        <!-- ============================== -->
+        <div id="chat-view" class="view-section">
+            <h1 style="margin-bottom: 20px;">💬 Community</h1>
+            
+            <!-- AUTHENTICATION SECTION -->
+            <div id="auth-section" class="auth-container">
+                <h3 style="margin-top: 0; border: none;">🔒 Farmer Login</h3>
+                <p style="color: #666;">Sign in to chat with other farmers in your region.</p>
+                <button id="login-btn">Sign in with Google</button>
+            </div>
+
+            <!-- COMMUNITY CHAT SECTION (Hidden until logged in) -->
+            <div id="chat-section" style="display: none;">
+                <div class="chat-container">
+                    <button id="logout-btn">Logout</button>
+                    <h3 style="margin-top: 0; border-bottom: none;">Regional Chat</h3>
+                    <p id="welcome-msg" style="font-size: 0.9rem; color: #666; margin-bottom: 15px;"></p>
+                    
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Messages load here -->
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Share an update...">
+                        <button id="send-btn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- UI JAVASCRIPT -->
+    <script>
+        // Toggle the dropdown menu visibility
+        function toggleMenu() {
+            document.getElementById('nav-dropdown').classList.toggle('show');
+        }
+
+        // Switch between Home and Chat views
+        function switchView(viewName) {
+            document.getElementById('home-view').classList.remove('active');
+            document.getElementById('chat-view').classList.remove('active');
+            document.getElementById(viewName + '-view').classList.add('active');
+            
+            // Hide the menu after clicking
+            document.getElementById('nav-dropdown').classList.remove('show');
+        }
+
+        // Close menu if user clicks anywhere outside of it
+        window.onclick = function(event) {
+            if (!event.target.matches('.hamburger')) {
+                var dropdowns = document.getElementsByClassName("dropdown");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+    </script>
+
     <!-- FIREBASE AND APP LOGIC -->
     <script type="module">
-        // 1. Import Firebase core, database, and auth modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         // ==========================================
-        // 2. YOUR FIREBASE CONFIGURATION
+        // PASTE YOUR WORKING FIREBASE CONFIG HERE
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDK21oehkpfOod71xZxiRiPRjTjb2JVh60",
             authDomain: "agrishift-9f2dc.firebaseapp.com",
-            databaseURL: "https://agrishift-9f2dc-default-rtdb.asia-southeast1.firebasedatabase.app", // <-- DO NOT FORGET TO REPLACE THIS!
+            databaseURL: "PASTE_YOUR_EXACT_DATABASE_URL_HERE", // <-- DO NOT FORGET TO REPLACE THIS
             projectId: "agrishift-9f2dc",
             storageBucket: "agrishift-9f2dc.firebasestorage.app",
             messagingSenderId: "841675381324",
@@ -153,125 +236,17 @@
             measurementId: "G-ZTLCX9J20Y"
         };
 
-        // Initialize Firebase Services
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
         const chatRef = ref(db, "messages");
-
-        let currentUser = null; // Tracks who is logged in
+        let currentUser = null; 
 
         // ==========================================
-        // 3. AUTHENTICATION LOGIC
+        // AUTHENTICATION LOGIC
         // ==========================================
         const authSection = document.getElementById('auth-section');
         const chatSection = document.getElementById('chat-section');
         const welcomeMsg = document.getElementById('welcome-msg');
-        const msgBox = document.getElementById('chat-messages');
-
-        // Login Button
-        document.getElementById('login-btn').addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch((error) => console.error("Login failed:", error));
-        });
-
-        // Logout Button
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth).catch((error) => console.error("Logout failed:", error));
-        });
-
-        // Monitor Login State
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is logged in
-                currentUser = user;
-                authSection.style.display = 'none';
-                chatSection.style.display = 'block';
-                welcomeMsg.innerText = `Welcome, ${user.displayName}!`;
-            } else {
-                // User is logged out
-                currentUser = null;
-                authSection.style.display = 'block';
-                chatSection.style.display = 'none';
-                msgBox.innerHTML = ''; // Clear chat history from screen on logout
-            }
-        });
-
-        // ==========================================
-        // 4. CHAT LOGIC (Sending & Receiving)
-        // ==========================================
-        const chatInput = document.getElementById('chat-input');
-
-        function sendMessage() {
-            const text = chatInput.value.trim();
-            if (!text || !currentUser) return;
-            
-            // Push message to Firebase with actual user data
-            push(chatRef, {
-                userId: currentUser.uid,
-                userName: currentUser.displayName,
-                text: text,
-                timestamp: serverTimestamp()
-            });
-            chatInput.value = ''; // Clear input
-        }
-
-        // Listen for incoming messages
-        onChildAdded(chatRef, (snapshot) => {
-            if (!currentUser) return; // Don't process if logged out
-            
-            const data = snapshot.val();
-            const newMsg = document.createElement('div');
-            
-            // Differentiate between "Your" messages and "Other" messages
-            if (data.userId === currentUser.uid) {
-                newMsg.className = 'message msg-you';
-                newMsg.innerHTML = `<strong>You:</strong> ${data.text}`;
-            } else {
-                newMsg.className = 'message msg-other';
-                newMsg.innerHTML = `<strong>${data.userName}:</strong> ${data.text}`;
-            }
-            
-            msgBox.appendChild(newMsg);
-            msgBox.scrollTop = msgBox.scrollHeight; // Auto-scroll
-        });
-
-        document.getElementById('send-btn').addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // ==========================================
-        // 5. CROP PLANNER LOGIC (NASA API)
-        // ==========================================
-        document.getElementById('analyze-btn').addEventListener('click', async () => {
-            const loc = document.getElementById('location').value;
-            const resDiv = document.getElementById('result');
-            resDiv.innerHTML = "<div class='loading'>📡 Accessing NASA POWER Climatology Data...</div>";
-            
-            try {
-                const response = await fetch(`/api/crop-plan?location=${loc}`);
-                const data = await response.json();
-                
-                if(data.error) {
-                    resDiv.innerHTML = `<p style='color:red; font-weight:bold;'>Error: ${data.error}</p>`;
-                    return;
-                }
-
-                resDiv.innerHTML = `
-                    <h3>🛰️ Live Satellite Analysis</h3>
-                    <div class="data-point temp">🌡️ <strong>Temperature:</strong> ${data.temperature} °C</div>
-                    <div class="data-point rain">🌧️ <strong>Precipitation:</strong> ${data.precipitation} mm/day</div>
-                    <div class="data-point soil">💧 <strong>Soil Wetness:</strong> ${data.soil_moisture} Index</div>
-                    <div class="recommendation-box">
-                        <h4>✅ Optimal Crop: ${data.recommendation}</h4>
-                        <p><strong>Agricultural Insight:</strong> ${data.reason}</p>
-                    </div>
-                `;
-            } catch (error) {
-                resDiv.innerHTML = "<p style='color:red; font-weight:bold;'>Error establishing connection to telemetry server.</p>";
-            }
-        });
-    </script>
-</body>
-</html>
+        const msgBox = document.
