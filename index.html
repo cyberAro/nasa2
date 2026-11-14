@@ -42,7 +42,7 @@
         }
         .hamburger:hover { background: #fff; }
         .dropdown {
-            display: none; /* Hidden by default */
+            display: none; 
             flex-direction: column;
             background: rgba(255, 255, 255, 0.95);
             margin-top: 10px;
@@ -70,7 +70,7 @@
             width: 100%;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255,255,255,0.2);
-            margin-top: 40px; /* Space for the floating menu */
+            margin-top: 40px; 
         }
 
         /* View Toggling */
@@ -223,12 +223,12 @@
         import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
         // ==========================================
-        // PASTE YOUR WORKING FIREBASE CONFIG HERE
+        // FIREBASE CONFIGURATION
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDK21oehkpfOod71xZxiRiPRjTjb2JVh60",
             authDomain: "agrishift-9f2dc.firebaseapp.com",
-            databaseURL: "https://agrishift-9f2dc-default-rtdb.asia-southeast1.firebasedatabase.app", // <-- DO NOT FORGET TO REPLACE THIS
+            databaseURL: "https://agrishift-9f2dc-default-rtdb.asia-southeast1.firebasedatabase.app", 
             projectId: "agrishift-9f2dc",
             storageBucket: "agrishift-9f2dc.firebasestorage.app",
             messagingSenderId: "841675381324",
@@ -249,4 +249,99 @@
         const authSection = document.getElementById('auth-section');
         const chatSection = document.getElementById('chat-section');
         const welcomeMsg = document.getElementById('welcome-msg');
-        const msgBox = document.
+        const msgBox = document.getElementById('chat-messages');
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            signInWithRedirect(auth, provider).catch((error) => console.error("Login failed:", error));
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth).catch((error) => console.error("Logout failed:", error));
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                authSection.style.display = 'none';
+                chatSection.style.display = 'block';
+                welcomeMsg.innerText = `Welcome, ${user.displayName}!`;
+            } else {
+                currentUser = null;
+                authSection.style.display = 'block';
+                chatSection.style.display = 'none';
+                msgBox.innerHTML = ''; 
+            }
+        });
+
+        // ==========================================
+        // CHAT LOGIC
+        // ==========================================
+        const chatInput = document.getElementById('chat-input');
+
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text || !currentUser) return;
+            push(chatRef, {
+                userId: currentUser.uid,
+                userName: currentUser.displayName,
+                text: text,
+                timestamp: serverTimestamp()
+            });
+            chatInput.value = ''; 
+        }
+
+        onChildAdded(chatRef, (snapshot) => {
+            if (!currentUser) return; 
+            const data = snapshot.val();
+            const newMsg = document.createElement('div');
+            
+            if (data.userId === currentUser.uid) {
+                newMsg.className = 'message msg-you';
+                newMsg.innerHTML = `<strong>You:</strong> ${data.text}`;
+            } else {
+                newMsg.className = 'message msg-other';
+                newMsg.innerHTML = `<strong>${data.userName}:</strong> ${data.text}`;
+            }
+            msgBox.appendChild(newMsg);
+            msgBox.scrollTop = msgBox.scrollHeight; 
+        });
+
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // ==========================================
+        // CROP PLANNER LOGIC
+        // ==========================================
+        document.getElementById('analyze-btn').addEventListener('click', async () => {
+            const loc = document.getElementById('location').value;
+            const resDiv = document.getElementById('result');
+            resDiv.innerHTML = "<div class='loading'>📡 Accessing NASA POWER Climatology Data...</div>";
+            
+            try {
+                const response = await fetch(`/api/crop-plan?location=${loc}`);
+                const data = await response.json();
+                
+                if(data.error) {
+                    resDiv.innerHTML = `<p style='color:red; font-weight:bold;'>Error: ${data.error}</p>`;
+                    return;
+                }
+
+                resDiv.innerHTML = `
+                    <h3>🛰️ Live Satellite Analysis</h3>
+                    <div class="data-point temp">🌡️ <strong>Temperature:</strong> ${data.temperature} °C</div>
+                    <div class="data-point rain">🌧️ <strong>Precipitation:</strong> ${data.precipitation} mm/day</div>
+                    <div class="data-point soil">💧 <strong>Soil Wetness:</strong> ${data.soil_moisture} Index</div>
+                    <div class="recommendation-box">
+                        <h4>✅ Optimal Crop: ${data.recommendation}</h4>
+                        <p><strong>Agricultural Insight:</strong> ${data.reason}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resDiv.innerHTML = "<p style='color:red; font-weight:bold;'>Error establishing connection to telemetry server.</p>";
+            }
+        });
+    </script>
+</body>
+</html>
