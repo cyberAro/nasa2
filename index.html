@@ -9,7 +9,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            /* Vibrant Earth-to-Space Gradient */
             background: linear-gradient(135deg, #2e7d32 0%, #1565c0 100%);
             color: #333; 
             padding: 40px 20px;
@@ -46,7 +45,6 @@
             outline: none;
             transition: border-color 0.3s;
         }
-        select:focus { border-color: #1565c0; }
         
         button { 
             width: 100%; 
@@ -60,37 +58,40 @@
             cursor: pointer; 
             border-radius: 8px; 
             box-shadow: 0 4px 15px rgba(255, 143, 0, 0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
         }
-        button:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 143, 0, 0.6);
-        }
+        button:hover { transform: translateY(-2px); }
 
         /* Results Styling */
         #result { margin-top: 30px; line-height: 1.6; }
         .data-point {
-            background: #f1f8e9;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin: 8px 0;
-            border-left: 5px solid #7cb342;
-            font-size: 1.1rem;
+            background: #f1f8e9; padding: 10px 15px; border-radius: 8px;
+            margin: 8px 0; border-left: 5px solid #7cb342; font-size: 1.1rem;
         }
         .data-point.temp { border-color: #e53935; background: #ffebee; }
         .data-point.rain { border-color: #1e88e5; background: #e3f2fd; }
         .data-point.soil { border-color: #8d6e63; background: #efebe9; }
 
         .recommendation-box {
-            background: #e8f5e9;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            border: 2px solid #66bb6a;
+            background: #e8f5e9; padding: 20px; border-radius: 12px;
+            margin-top: 20px; border: 2px solid #66bb6a;
         }
         .recommendation-box h4 { color: #2e7d32; font-size: 1.4rem; margin-bottom: 10px; }
-        
         .loading { text-align: center; color: #1565c0; font-weight: bold; font-size: 1.2rem; margin-top: 20px; }
+
+        /* COMMUNITY CHAT STYLES */
+        .chat-container { margin-top: 40px; background: #f9f9f9; border-radius: 12px; padding: 20px; border: 1px solid #e0e0e0; }
+        .chat-messages { 
+            height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; 
+            margin-bottom: 15px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #ffffff;
+        }
+        .message { padding: 10px 14px; border-radius: 15px; font-size: 0.95rem; max-width: 85%; line-height: 1.4; }
+        .msg-other { background: #f1f8e9; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #c8e6c9; }
+        .msg-you { background: #e3f2fd; align-self: flex-end; border-bottom-right-radius: 2px; border: 1px solid #bbdefb; }
+        
+        .chat-input-area { display: flex; gap: 10px; }
+        .chat-input-area input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; outline: none; }
+        .chat-input-area button { margin-top: 0; width: auto; padding: 12px 24px; background: #1565c0; box-shadow: none; }
     </style>
 </head>
 <body>
@@ -104,13 +105,101 @@
             <option value="Polonnaruwa">Polonnaruwa (Dry Zone)</option>
             <option value="Hambantota">Hambantota (Dry Zone)</option>
         </select>
-        <button onclick="fetchPlan()">Analyze NASA Satellite Data 🚀</button>
+        <button id="analyze-btn">Analyze NASA Satellite Data 🚀</button>
 
         <div id="result"></div>
+
+        <!-- COMMUNITY CHAT SECTION -->
+        <div class="chat-container">
+            <h3 style="margin-top: 0; border-bottom: none;">💬 Regional Farmer Chat</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Live community discussion board.</p>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will load here from Firebase -->
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Share an update...">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        async function fetchPlan() {
+    <!-- FIREBASE AND APP LOGIC -->
+    <script type="module">
+        // 1. Import Firebase core and database modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // ==========================================
+        // 2. PASTE YOUR FIREBASE CONFIG HERE
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const chatRef = ref(db, "messages");
+
+        // Generate a random user ID for this browser session so we know which messages are "You"
+        const myUserId = "user_" + Math.floor(Math.random() * 10000);
+
+        // ==========================================
+        // 3. CHAT LOGIC (Sending & Receiving)
+        // ==========================================
+        const msgBox = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+
+        // Function to send message to Firebase
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            
+            // Push message to Firebase database
+            push(chatRef, {
+                userId: myUserId,
+                text: text,
+                timestamp: serverTimestamp()
+            });
+            chatInput.value = ''; // Clear input
+        }
+
+        // Listen for new messages added to Firebase in real-time
+        onChildAdded(chatRef, (snapshot) => {
+            const data = snapshot.val();
+            const newMsg = document.createElement('div');
+            
+            // If the message was sent by this device, style it as "msg-you", otherwise "msg-other"
+            if (data.userId === myUserId) {
+                newMsg.className = 'message msg-you';
+                newMsg.innerHTML = `<strong>You:</strong> ${data.text}`;
+            } else {
+                newMsg.className = 'message msg-other';
+                newMsg.innerHTML = `<strong>Farmer:</strong> ${data.text}`;
+            }
+            
+            msgBox.appendChild(newMsg);
+            msgBox.scrollTop = msgBox.scrollHeight; // Auto-scroll to bottom
+        });
+
+        // Event Listeners for Chat
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // ==========================================
+        // 4. CROP PLANNER LOGIC (Connected to Vercel Python API)
+        // ==========================================
+        document.getElementById('analyze-btn').addEventListener('click', async () => {
             const loc = document.getElementById('location').value;
             const resDiv = document.getElementById('result');
             resDiv.innerHTML = "<div class='loading'>📡 Accessing NASA POWER Climatology Data...</div>";
@@ -138,7 +227,7 @@
             } catch (error) {
                 resDiv.innerHTML = "<p style='color:red; font-weight:bold;'>Error establishing connection to telemetry server.</p>";
             }
-        }
+        });
     </script>
 </body>
 </html>
